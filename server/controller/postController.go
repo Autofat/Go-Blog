@@ -15,7 +15,7 @@ import (
 
 func CreatePost(c *fiber.Ctx)error{
 	cookie:= c.Cookies("jwt")
-	if cookie==""{
+	if cookie == ""{
 		c.Status(401)
 		return c.JSON(fiber.Map{
 			"message":"unauthenticated",

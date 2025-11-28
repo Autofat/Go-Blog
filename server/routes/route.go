@@ -10,6 +10,7 @@ import (
 func SetupRoutes(app *fiber.App) {
 	app.Post("/api/register", controller.Register)
 	app.Post("/api/login", controller.Login)
+	app.Post("/api/logout", controller.Logout)
 	
 	authenticated := app.Group("/", middleware.IsAuthenticated) // Apply authentication middleware to all routes 
 	authenticated.Post("/api/post", controller.CreatePost)

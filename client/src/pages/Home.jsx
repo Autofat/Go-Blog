@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAllPosts } from "../services/api";
+import { getAllPosts, logout } from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -21,17 +21,9 @@ const Home = () => {
     try {
       const response = await getAllPosts(currentPage);
 
-      console.log("Full Response:", response);
-      console.log("Response Data:", response.data);
-      console.log("Response Meta:", response.meta);
-
       setPosts(response.data || []);
       setTotalPages(response.meta?.last_page || 1);
     } catch (error) {
-      console.error("Failed to fetch posts:", error);
-      console.error("Error status:", error.response?.status); // ✅ Debug status
-      console.error("Error data:", error.response?.data); // ✅ Debug data
-
       // ✅ Jika error 401, redirect ke login
       if (error.response?.status === 401) {
         setError("Please login to view posts");
@@ -49,6 +41,17 @@ const Home = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo(0, 0);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      alert("Logout successful!");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
+    }
   };
 
   // ✅ Tampilkan loading state
@@ -98,6 +101,12 @@ const Home = () => {
               >
                 Create Post
               </Link>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

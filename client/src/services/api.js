@@ -18,10 +18,10 @@ export const login = async (userData) => {
   return response.data;
 };
 
-// export const logout = async () => {
-//   const response = await api.post("/logout");
-//   return response.data;
-// };
+export const logout = async () => {
+  const response = await api.post("/logout");
+  return response.data;
+};
 
 // Blog Service
 export const getAllPosts = async (page = 1) => {
@@ -44,3 +44,15 @@ export const getPostById = async (postId) => {
   const response = await api.get(`/posts/${postId}`);
   return response.data;
 };
+
+// Image Upload Service
+export const Upload = async (formData) => {
+  const response = await api.post("/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
+export default api;

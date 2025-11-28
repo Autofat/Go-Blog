@@ -104,7 +104,7 @@ func Login(c *fiber.Ctx) error{
 	}
 
 	// Generate JWT Token
-	fmt.Println("Generating JWT for user ID:", user.ID) // Log untuk memeriksa ID pengguna
+	// fmt.Println("Generating JWT for user ID:", user.ID) // Log untuk memeriksa ID pengguna
 	token, err:= util.GenerateJwt(strconv.Itoa(int(user.ID)),)
 	if err!=nil{
 		c.Status(fiber.StatusInternalServerError)
@@ -124,6 +124,21 @@ func Login(c *fiber.Ctx) error{
 	return c.JSON(fiber.Map{
 		"message":"Login successful",
 		"user": user,
+	})
+}
+
+func Logout (c *fiber.Ctx) error{
+		cookie:= fiber.Cookie{
+		Name: "jwt",
+		Value: "",
+		Expires:  time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+		SameSite: "Lax",
+		Path: "/",
+	}
+	c.Cookie(&cookie)
+	return c.JSON(fiber.Map{
+		"message":"Logout successful",
 	})
 }
 
