@@ -9,9 +9,10 @@ import (
 
 const SecretKey = "secret"
 
-func GenerateJwt(issuer string) (string, error) {
+func GenerateJwt(userId string) (string, error) {
     claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-        Issuer:    issuer,
+        Issuer:    "goblog-api",
+        Subject: userId,
         ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)), // Token expires in 24 hours
     })
     return claims.SignedString([]byte(SecretKey))
@@ -27,5 +28,5 @@ func ParseJwt(cookie string)(string, error){
     }
 
     claims := token.Claims.(*jwt.RegisteredClaims)
-    return claims.Issuer, nil
+    return claims.Subject, nil
 }

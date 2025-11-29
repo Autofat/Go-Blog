@@ -133,7 +133,7 @@ const Home = () => {
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition"
               >
                 <img
-                  src={post.image || "https://via.placeholder.com/400x200"}
+                  src={post.image}
                   alt={post.title}
                   className="w-full h-48 object-cover"
                 />

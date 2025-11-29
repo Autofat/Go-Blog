@@ -26,6 +26,11 @@ const Login = () => {
     try {
       const response = await login(formData);
       console.log("Login success:", response);
+
+      if (response.user && response.user.id) {
+        localStorage.setItem("user_id", response.user.id.toString());
+        console.log("user id", response.user.id);
+      }
       alert("Login successful!");
       navigate("/");
     } catch (err) {

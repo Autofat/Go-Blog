@@ -104,7 +104,9 @@ func UniquePost(c *fiber.Ctx) error {
 
     var blogs []models.Blog
     database.DB.Where("user_id = ?", UserID).Preload("User").Find(&blogs)
-    return c.JSON(blogs)
+    return c.JSON(fiber.Map{
+		"data": blogs,
+	})
 }
 
 func DeletePost(c *fiber.Ctx) error {

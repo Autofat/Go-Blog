@@ -34,6 +34,11 @@ export const createPost = async (postData) => {
   return response.data;
 };
 
+export const deletePost = async (postId) => {
+  const response = await api.delete(`/posts/delete/${postId}`);
+  return response.data;
+};
+
 export const getUniquePost = async () => {
   // Mengambil post yang di upload oleh si user
   const response = await api.get("/posts/unique");
@@ -47,7 +52,7 @@ export const getPostById = async (postId) => {
 
 // Image Upload Service
 export const Upload = async (formData) => {
-  const response = await api.post("/upload", formData, {
+  const response = await api.post("/upload-image", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
