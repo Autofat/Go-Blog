@@ -39,6 +39,11 @@ export const deletePost = async (postId) => {
   return response.data;
 };
 
+export const updatePost = async (postId, postData) => {
+  const response = await api.put(`/posts/update/${postId}`, postData);
+  return response.data;
+};
+
 export const getUniquePost = async () => {
   // Mengambil post yang di upload oleh si user
   const response = await api.get("/posts/unique");

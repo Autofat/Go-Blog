@@ -144,7 +144,7 @@ const Home = () => {
                   <p className="text-gray-600 mb-4 line-clamp-3">{post.desc}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">
-                      By: {post.User?.first_name} {post.User?.last_name}
+                      By: {post.User?.FirstName} {post.User?.LastName}
                     </span>
                     <Link
                       to={`/posts/${post.id}`}

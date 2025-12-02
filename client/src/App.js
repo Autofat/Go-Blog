@@ -6,6 +6,7 @@ import CreatePost from "./pages/CreatePost";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import DetailPost from "./pages/DetailPost";
+import EditPost from "./pages/EditPost";
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/posts/:id" element={<DetailPost />} />
+        <Route path="/posts/update/:id" element={<EditPost />} />
+        <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </Router>
   );

@@ -84,18 +84,71 @@ func DetailPost(c *fiber.Ctx)error{
 }
 
 func UpdatePost(c *fiber.Ctx)error{
+
+	cookie := c.Cookies("jwt")
+	if cookie == "" {
+		c.Status(401)
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
+	}
+
+	UserID, err := util.ParseJwt(cookie)
+	if err != nil {
+		c.Status(401)
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
+	}
+
 	id,_ :=strconv.Atoi(c.Params("id"))
-	blog:= models.Blog{
-		ID: uint(id),
+	var existingPost models.Blog
+	if err := database.DB.First(&existingPost, id).Error; err != nil {
+		c.Status(404)
+		return c.JSON(fiber.Map{
+			"message": "Post not found",
+		})
 	}
-	if err:=c.BodyParser(&blog); err!=nil{
+
+	if existingPost.UserID != UserID {
+		c.Status(403)
+		return c.JSON(fiber.Map{
+			"message": "You are not authorized to update this post",
+		})
+	}
+
+	var updatedData models.Blog
+	if err := c.BodyParser(&updatedData); err != nil {
 		fmt.Println("Error parsing body:", err)
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Invalid payload",
+		})
 	}
-	database.DB.Model(&blog).Updates(blog)
-	return c.JSON(fiber.Map{
-		"message":"Success update your post",
-	})
+
+		updates := map[string]interface{}{
+			"title":   updatedData.Title,
+			"desc": updatedData.Desc,
+		}
+
+		if updatedData.Image != "" {
+			updates["image"] = updatedData.Image
+		}
+
+		if err := database.DB.Model(&existingPost).Updates(updates).Error; err != nil {
+			c.Status(500)
+			return c.JSON(fiber.Map{
+				"message": "Failed to update post",
+			})
+		}
+
+		database.DB.Preload("User").First(&existingPost, id)
+		return c.JSON(fiber.Map{
+			"message": "Post updated successfully",
+			"data": existingPost,
+		})
 }
+
 
 func UniquePost(c *fiber.Ctx) error {
     // Ambil cookie JWT

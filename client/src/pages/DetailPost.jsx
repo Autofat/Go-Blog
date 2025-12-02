@@ -82,9 +82,9 @@ const DetailPost = () => {
   const postUserId = post.user_id.toString();
   const isOwner = postUserId === currentUserId;
 
-  console.log("User Id", currentUserId);
-  console.log("Post User Id", postUserId);
-  console.log("Is Owner", isOwner);
+  // console.log("User Id", currentUserId);
+  // console.log("Post User Id", postUserId);
+  // console.log("Is Owner", isOwner);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -157,7 +157,7 @@ const DetailPost = () => {
               {isOwner && (
                 <div className="flex space-x-4">
                   <Link
-                    to={`/posts/${post.id}/edit`}
+                    to={`/posts/update/${post.id}`}
                     className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition"
                   >
                     Edit

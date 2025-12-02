@@ -1,19 +1,55 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { createPost, Upload } from "../services/api";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { getPostById, updatePost, Upload } from "../services/api";
 
-const CreatePost = () => {
+const EditPost = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     desc: "",
-    image: "",
   });
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [currentImage, setCurrentImage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchPost();
+  }, [id]);
+
+  const fetchPost = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await getPostById(id);
+      const post = response.data || response;
+
+      setFormData({
+        title: post.title || "",
+        desc: post.desc || "",
+      });
+      setCurrentImage(post.image || "");
+    } catch (error) {
+      console.error("Failed to fetch post:", error);
+
+      if (error.response?.status === 401) {
+        alert("Please login to edit the post");
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        alert("You do not have permission to edit this post");
+        navigate("/my/posts");
+      } else {
+        setError("Failed to load post. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -24,7 +60,6 @@ const CreatePost = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-
     if (file) {
       const allowedTypes = [
         "image/jpeg",
@@ -48,7 +83,6 @@ const CreatePost = () => {
       setError("");
       setImageFile(file);
 
-      // Create Preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -63,13 +97,9 @@ const CreatePost = () => {
       return null;
     }
 
-    setUploading(true);
-    setError("");
-
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
-
       const response = await Upload(formData);
       return response.url;
     } catch (error) {
@@ -82,40 +112,51 @@ const CreatePost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     setError("");
-    setLoading(true);
 
     try {
-      let ImageUrl = "";
+      let imageUrl = currentImage;
       if (imageFile) {
-        ImageUrl = await handleImageUpload();
-        if (!ImageUrl) {
-          setLoading(false);
+        const uploadedUrl = await handleImageUpload();
+        if (!uploadedUrl) {
+          setSubmitting(false);
           return;
         }
+        imageUrl = uploadedUrl;
       }
-
-      const postData = {
+      const updatedData = {
         title: formData.title,
         desc: formData.desc,
-        image: ImageUrl,
+        image: imageUrl,
       };
-
-      const response = await createPost(postData);
-      console.log("Post created:", response);
-      alert("Post created successfully!");
-      navigate("/my/posts");
-    } catch (err) {
-      console.error("Error creating post:", err);
-      setError(err.response?.data?.message || "Failed to create post");
-      if (err.response?.status === 401) {
+      await updatePost(id, updatedData);
+      alert("Post updated successfully");
+      navigate(`/posts/${id}`);
+    } catch (error) {
+      console.error("Failed to update post:", error);
+      setError("Failed to update post. Please try again.");
+      if (error.response?.status === 401) {
         alert("Please login first");
         navigate("/login");
+      } else if (error.response?.status === 403) {
+        alert("You can only edit your own posts");
+        navigate("/my/posts");
+      } else {
+        setError("Failed to load post");
       }
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-2xl text-gray-600">Loading post...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -123,12 +164,12 @@ const CreatePost = () => {
         {/* Header */}
         <div className="mb-8">
           <Link
-            to="/"
+            to={`/posts/${id}`}
             className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
           >
-            ← Back to Home
+            ← Back to Post
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Post</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Edit Post</h1>
         </div>
 
         {/* Form */}
@@ -140,6 +181,7 @@ const CreatePost = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Post Title *
@@ -155,9 +197,10 @@ const CreatePost = () => {
               />
             </div>
 
+            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+                Description *
               </label>
               <textarea
                 name="desc"
@@ -169,10 +212,28 @@ const CreatePost = () => {
                 placeholder="Write your post content here..."
               />
             </div>
+
+            {/* Image Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Post Image
               </label>
+
+              {/* Current Image */}
+              {currentImage && !imagePreview && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">Current Image:</p>
+                  <img
+                    src={currentImage}
+                    alt="Current"
+                    className="w-full max-h-64 object-cover rounded-lg border-2 border-gray-200"
+                    onError={(e) => {
+                      e.target.src =
+                        "https://via.placeholder.com/800x400/EEE/999?text=Image+Not+Found";
+                    }}
+                  />
+                </div>
+              )}
 
               {/* File Input */}
               <div className="mt-2">
@@ -181,23 +242,24 @@ const CreatePost = () => {
                   accept="image/*"
                   onChange={handleImageChange}
                   className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-lg file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100
-                  cursor-pointer"
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100
+                    cursor-pointer"
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  Allowed: JPEG, PNG, GIF, WebP (Max 2MB)
+                  Allowed: JPEG, PNG, GIF (Max 2MB) - Leave empty to keep
+                  current image
                 </p>
               </div>
 
-              {/* Image Preview */}
+              {/* New Image Preview */}
               {imagePreview && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700 mb-2">
-                    Preview:
+                    New Image Preview:
                   </p>
                   <img
                     src={imagePreview}
@@ -212,23 +274,28 @@ const CreatePost = () => {
                     }}
                     className="mt-2 text-sm text-red-600 hover:text-red-800"
                   >
-                    Remove Image
+                    Remove New Image
                   </button>
                 </div>
               )}
             </div>
 
+            {/* Submit Buttons */}
             <div className="flex space-x-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting || uploading}
                 className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition font-medium"
               >
-                {loading ? "Creating..." : "Create Post"}
+                {uploading
+                  ? "Uploading Image..."
+                  : submitting
+                  ? "Updating..."
+                  : "Update Post"}
               </button>
               <Link
-                to="/my/posts"
-                className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition font-medium text-center"
+                to={`/posts/${id}`}
+                className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition font-medium text-center flex items-center justify-center"
               >
                 Cancel
               </Link>
@@ -240,4 +307,4 @@ const CreatePost = () => {
   );
 };
 
-export default CreatePost;
+export default EditPost;
