@@ -29,6 +29,21 @@ const EditPost = () => {
       const response = await getPostById(id);
       const post = response.data || response;
 
+      const currentUserId = localStorage.getItem("user_id");
+      const postUserId = post.user_id?.toString();
+
+      if (!currentUserId) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      if (postUserId !== currentUserId) {
+        alert("You can only edit your own posts!");
+        navigate(`/posts/${id}`); // Redirect to detail page
+        return;
+      }
+
       setFormData({
         title: post.title || "",
         desc: post.desc || "",
